@@ -1,0 +1,42 @@
+[
+  {
+    "first name": "test1",
+    "Last name": "case1",
+    "email": "test1@gmail.com",
+    "password": "test1",
+    "dob": "2022-10-31",
+    "Mobile_no": "123456"
+  },
+  {
+    "first name": "test2",
+    "Last name": "case2",
+    "email": "test2@gmail.com",
+    "password": "test2",
+    "dob": "2002-01-03",
+    "Mobile_no": "123456"
+  },
+  {
+    "first name": "test3",
+    "Last name": "case3",
+    "email": "test3@gmail.com",
+    "password": "test3",
+    "dob": "1982-10-01",
+    "Mobile_no": "123456"
+  },
+  {
+    "first name": "test4",
+    "Last name": "case4",
+    "email": "test4@gmail.com",
+    "password": "test4",
+    "dob": "1994-06-22",
+    "Mobile_no": "123456"
+  },
+  {
+    "first name": "test5",
+    "Last name": "case5",
+    "email": "test5@gmail.com",
+    "password": "test5",
+    "dob": "1955-07-26",
+    "Mobile_no": "123456"
+  }
+]
