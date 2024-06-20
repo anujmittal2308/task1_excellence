@@ -38,5 +38,13 @@
     "password": "test5",
     "dob": "1955-07-26",
     "Mobile_no": "123456"
+  },
+  {
+    "first name": "test6",
+    "Last name": "case6",
+    "email": "test6@gmail.com",
+    "password": "test6",
+    "dob": "1855-07-26",
+    "Mobile_no": "123456"
   }
 ]

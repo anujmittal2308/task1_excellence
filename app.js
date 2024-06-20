@@ -88,30 +88,32 @@ app.post("/", async (req, res) => {
     res.status(500).send("Error in inserting users");
   }
 });
-app.get("/age", (req, res) => {
+app.get("/age", async (req, res) => {
   const users = dom_data;
-  console.log(req.params);
-  console.log(req.body);
+  // console.log(req.params);
+  // console.log(req.body);
+  // console.log(req.query);
   var avg_age = 0;
   for (const user of users) {
     const age = getAge(user.dob);
     avg_age = avg_age + age;
-    console.log(age);
-    console.log(avg_age);
+    // console.log(age);
+    // console.log(avg_age);
   }
   avg_age = avg_age / 5;
-  console.log(avg_age);
-  res.status(400).send(avg_age);
+  //console.log(avg_age);
+  res.status(200).json({ data: avg_age });
 });
 
-// app.delete("/delete", (req, res) => {
-//   const users = dom_data;
-//   for (const user of users) {
-//     const age = getAge(user.dob);
-//     if (age >= 26) {
-//       //res.status(500).send(user);
-//     }
-//   }
-// });
+app.delete("/delete", (req, res) => {
+  const users = dom_data;
+  for (const user of users) {
+    const age = getAge(user.dob);
+    if (age >= 100) {
+      console.log(user);
+      res.status(500).send(user);
+    }
+  }
+});
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
