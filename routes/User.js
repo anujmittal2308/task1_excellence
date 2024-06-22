@@ -25,12 +25,6 @@ router.post("/register", async (req, res) => {
 
     result.confirm_password = sec_con_Pass;
     console.log(result);
-
-    // if (error) {
-    //   console.log(error);
-    //   res.status(400).json({ error }, { message: "Server error" });
-    // }
-
     return res
       .status(201)
       .json({ message: "User registered successfully", result });
@@ -40,8 +34,24 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// router.post("/login", (req, res) => {
-//   const user = new User(req.params.u);
-// });
+router.post("/login", async (req, res) => {
+  console.log(req.body.user_name);
+  console.log(req.body.password);
+  // console.log(User.find());
+  try {
+    if (req.body.user_name && req.body.password) {
+      const username = req.body.user_name;
+      const user = await User.findOne({ user_name: username }); // in find we pass in key valu pair
+      console.log(user);
+      if (user) {
+        res.status(201).json({ message: " successful", _id: user._id });
+      } else {
+        res.status(400).send({ result: "No User found" });
+      }
+    }
+  } catch (error) {
+    res.status(400).send({ result: "No User found", error });
+  }
+});
 
 module.exports = router;
