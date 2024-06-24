@@ -67,7 +67,25 @@ router.get("/get/:_id", async (req, res) => {
       res.status(400).send({ message: "not not found" });
     }
   } catch (err) {
-    res.status(400).send(err);
+    res.status(400).send({ message: "not not found", err });
+  }
+});
+
+router.delete("/delete/:_id", async (req, res) => {
+  const user_id = req.params;
+  console.log(req.params);
+  console.log({ user_id });
+  try {
+    const user = await User.findByIdAndDelete(user_id);
+    console.log(user);
+    if (user) {
+      res.status(201).send({ message: "user successfull delete", user });
+    } else {
+      res.status(400).send({ message: "user not fund" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(400).send({ message: "invalad id", err });
   }
 });
 
