@@ -89,4 +89,17 @@ router.delete("/delete/:_id", async (req, res) => {
   }
 });
 
+router.get("/list/:page", async (req, res) => {
+  page_no = req.params.page;
+  const user = await User.find();
+  let n = page_no - 1;
+  n = n * 10;
+  let k = page_no * 10;
+  let queue = [];
+  for (let i = n; i < k; i++) {
+    queue.push(user[i]);
+  }
+  res.send(queue);
+});
+
 module.exports = router;
