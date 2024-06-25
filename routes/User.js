@@ -160,16 +160,17 @@ router.get("/list/:page", VerifyToken, async (req, res) => {
 });
 
 router.post("/address/:id", VerifyToken, async (req, res) => {
-  const user = new User(req.body);
+  const user = new user_add(req.body);
   const result = await user.save();
   res.status(201).json({ message: "add save ", result });
 });
 
-router.get("/gets/:id", VerifyToken, (req, res) => {
-  const user_id = req.params;
+router.get("/gets/:id", VerifyToken, async (req, res) => {
+  const user_id = req.params.id;
   try {
-    const user1 = User.findById(user_id);
-    const user2 = user_add.findById(user_id);
+    const user1 = await User.findById(user_id);
+    const user2 = await user_add.findById(user_id);
+    console.log(user1);
     const user = user1 + user2;
     res.status(202).json({ message: "user with it addreas", user });
   } catch (err) {
