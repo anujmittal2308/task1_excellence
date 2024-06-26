@@ -9,6 +9,8 @@ const mongoose = require("mongoose");
 const crypto = require("crypto");
 const hash = crypto.createHash("sha256");
 const md5 = require("md5");
+const jwt = require("jsonwebtoken");
+const jwtkey = 8;
 
 require("../db/config");
 const session = require("express-session");
@@ -59,49 +61,55 @@ router.post("/login", async (req, res) => {
       if (user) {
         console.log(user);
 
-        digest = crypto
-          .createHash("md5")
-          .update("example@gmail.com")
-          .digest("hex");
-        Math.floor((parseInt(digest, 16) / 2 ** 128) * 100);
-        console.log(digest);
-        const user_Id = user._id;
-        console.log(user_Id);
+        // digest = crypto
+        //   .createHash("md5")
+        //   .update("example@gmail.com")
+        //   .digest("hex");
+        // Math.floor((parseInt(digest, 16) / 2 ** 128) * 100);
+        // console.log(digest);
+        // const user_Id = user._id;
+        // console.log(user_Id);
 
         // const data = { user_id: user_Id, ramdom_no: digest };
         // const verifiuser = await new user_verification(data);
 
         // console.log(data);
-        try {
-          // const data = user_verification.create({
-          //   user_id: user_Id,
-          //   ramdom_no: digest,
-          // });
-          const date_time = new Date();
-          // let date = ("0" + date_time.getDate()).slice(-2);
-          // let month = ("0" + (date_time.getMonth() + 1)).slice(-2);
-          // let year = date_time.getFullYear();
-          const hours = date_time.getHours();
-          const minutes = date_time.getMinutes();
-          const seconds = date_time.getSeconds();
-          let time_count = 0 + hours * 60;
-          time_count = time_count + minutes;
-          time_count = time_count + seconds / 60;
-          // prints date & time in YYYY-MM-DD HH:MM:SS format
-          console.log(time_count);
+        //try {
+        // const data = user_verification.create({
+        //   user_id: user_Id,
+        //   ramdom_no: digest,
+        // });
+        //const date_time = new Date();
+        // let date = ("0" + date_time.getDate()).slice(-2);
+        // let month = ("0" + (date_time.getMonth() + 1)).slice(-2);
+        // let year = date_time.getFullYear();
+        // const hours = date_time.getHours();
+        // const minutes = date_time.getMinutes();
+        // const seconds = date_time.getSeconds();
+        // let time_count = 0 + hours * 60;
+        // time_count = time_count + minutes;
+        // time_count = time_count + seconds / 60;
+        // prints date & time in YYYY-MM-DD HH:MM:SS format
+        // console.log(time_count);
 
-          const data = new user_verification({
-            user_id: user_Id,
-            ramdom_no: digest,
-            time_out: time_count,
-          });
-          const savedData = await data.save();
-          //          const result = await user_verification.save(data);
-        } catch (err) {
-          console.log(err);
-        }
-
-        res.status(201).json({ message: " successful", _id: user._id });
+        //   const data = new user_verification({
+        //     user_id: user_Id,
+        //     ramdom_no: digest,
+        //     time_out: time_count,
+        //   });
+        //   const savedData = await data.save();
+        //   //          const result = await user_verification.save(data);
+        // } catch (err) {
+        //   console.log(err);
+        // }
+        jwt.singn({ user }, jwtkey, { expiresIn: "1h" }, (err, token) => {
+          if (err) {
+            res.send({ message: "jwt not work ", err });
+          }
+          res
+            .status(201)
+            .json({ message: " successful", _id: user._id, auth: token });
+        });
       } else {
         res.status(400).send({ result: "No User found" });
       }
