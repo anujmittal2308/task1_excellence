@@ -268,9 +268,7 @@ router.get(
       "---------------------------------------------------------------------------------------------------------------"
     );
     console.log(req.params.id);
-    console.log(
-      "---------------------------------------------------------------------------------------------------------------"
-    );
+
     try {
       const userA = await User.findOne({ fist_set: user_id });
       const userB = await user_add.findOne({ fist_set: user_id });
