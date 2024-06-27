@@ -10,11 +10,15 @@ const crypto = require("crypto");
 const hash = crypto.createHash("sha256");
 const md5 = require("md5");
 const jwt = require("jsonwebtoken");
-const jwtkey = "gfdhfguu";
-const LocalStrategy = require("passport-this.lock").LocalStrategy;
+require("dotenv").config();
+const passport = require("passport");
+//require("../db/passports")(passport);
+const jwtkey = process.env.jwtkeys;
+const LocalStrategy = require("passport-local").LocalStrategy;
 
 require("../db/config");
 const session = require("express-session");
+const { nextTick } = require("process");
 router.use(express.json());
 
 router.post("/register", async (req, res) => {
@@ -60,13 +64,17 @@ router.post("/register", async (req, res) => {
     res.status(400).json({ message: "error found", err });
   }
 });
-
+//const token = jwt.sign({ exp: 604800, data: User });
+//console.log(token);
 router.post(
   "/login",
-  { failureRedirect: "/login", failureMessage: true },
+  /*{ failureRedirect: "/login", failureMessage: true } passport.authenticate(
+    "local",
+    { failureRedirect: "/login" }
+  ),*/
   async (req, res) => {
     // console.log(req.body.user_name);
-    // console.log(req.body.password);
+    // console.log(req.body.password);`
 
     try {
       //in find we pass in key valu pair
@@ -118,31 +126,69 @@ router.post(
           // } catch (err) {
           //   console.log(err);
           // }
-          passport.use(
-            new LocalStrategy(function (username, password, done) {
-              User.findOne({ username: username }, function (err, user) {
-                if (err) {
-                  return done(err);
-                }
-                if (!user) {
-                  return done(null, false);
-                }
-                if (!user.verifyPassword(password)) {
-                  return done(null, false);
-                }
-                return done(null, user);
-              });
-            })
-          );
+          // passport.use(
+          //   new LocalStrategy(function (username, password, done) {
+          //     User.findOne({ username: username }, function (err, user) {
+          //       if (err) {
+          //         return done(err);
+          //       }
+          //       if (!user) {
+          //         return done(null, false);
+          //       }
+          //       if (!user.verifyPassword(password)) {
+          //         return done(null, false);
+          //       }
+          //       return done(null, user);
+          //     });
+          //   })
+          // );
 
           jwt.sign({ user }, jwtkey, { expiresIn: "1h" }, (err, token) => {
             if (err) {
               res.send({ message: "jwt not work ", err });
             }
             console.log(user);
-            res
-              .status(201)
-              .json({ message: " successful", _id: user._id, auth: token });
+
+            // let params = {};
+
+            // (params.secretOrKey = process.env.jwtkeys),
+            //   (params.jwtFromRequrest =
+            //     ExtractJwt.fromAuthHeaderAsBearerToken(token)),
+            //   console.log(token);
+            // console.log(
+            //   "kjakjdfjkld====================================================="
+            // );
+            // passport.use(
+            //   new JwtStrategy(opts, (jwt_payload, done) => {
+            //     console.log(jwt_payload._id);
+            //     console.log(token);
+            //     console.log(
+            //       "kjakjdfjkld====================================================="
+            //     );
+            //     User.findOne({ id: jwt_payload.email }, (err, user) => {
+            //       console.log(id);
+            //       console.log(
+            //         "kjakjdfjkld====================================================="
+            //       );
+            //       if (err) {
+            //         return done(err, false);
+            //       }
+            //       if (user) {
+            res.status(201).json({
+              message: " successful",
+              _id: user._id,
+              auth: token,
+              user,
+            });
+            //next();
+            //             done(null, true);
+            //             next();
+            //           } else {
+            //             return done(null, false);
+            //           }
+            //         });
+            //       })
+            //     );
           });
         } else {
           res.status(400).send({ result: "No User found" });
@@ -208,28 +254,37 @@ router.post("/address/:id", VerifyToken, async (req, res) => {
   res.status(201).json({ message: "add save ", result });
 });
 
-router.get("/gets/:id", VerifyToken, async (req, res) => {
-  const user_id = req.params._id;
-  console.log(
-    "---------------------------------------------------------------------------------------------------------------"
-  );
-  console.log(req.params.id);
-  console.log(
-    "---------------------------------------------------------------------------------------------------------------"
-  );
-  try {
-    const userA = await User.findOne({ fist_set: user_id });
-    const userB = await user_add.findOne({ fist_set: user_id });
+router.get(
+  "/gets/:id",
+  /*VerifyToken,passport.authenticate("jwt", {
+    session: false,
+  })  passport.authenticate(
+    "local",
+    { failureRedirect: "/login" }
+  ),*/ VerifyToken,
+  async (req, res) => {
+    const user_id = req.params._id;
+    console.log(
+      "---------------------------------------------------------------------------------------------------------------"
+    );
+    console.log(req.params.id);
+    console.log(
+      "---------------------------------------------------------------------------------------------------------------"
+    );
+    try {
+      const userA = await User.findOne({ fist_set: user_id });
+      const userB = await user_add.findOne({ fist_set: user_id });
 
-    console.log(userA);
-    console.log(userB);
-    const mergedObject = Object.assign(userA, userB);
-    console.log(mergedObject);
-    res.status(202).json({ message: "user with it addreas", mergedObject });
-  } catch (err) {
-    res.status(400).send(err);
+      console.log(userA);
+      console.log(userB);
+      const mergedObject = Object.assign(userA, userB);
+      console.log(mergedObject);
+      res.status(202).json({ message: "user with it addreas", mergedObject });
+    } catch (err) {
+      res.status(400).send(err);
+    }
   }
-});
+);
 
 router.delete("/address", VerifyToken, async (req, res) => {
   const userid = req.params;
@@ -288,6 +343,9 @@ router.delete("/address", VerifyToken, async (req, res) => {
 //     res.status(400).send({ message: "token no pass 3", err });
 //   }
 // }
+
+// jwt
+
 async function VerifyToken(req, res, next) {
   let token = req.headers["authorization"];
   console.log(token);
@@ -307,4 +365,68 @@ async function VerifyToken(req, res, next) {
   }
   console.warn(token);
 }
+
+var JwtStrategy = require("passport-jwt").Strategy,
+  ExtractJwt = require("passport-jwt").ExtractJwt;
+
+//new JwtStrategy(options, verify);
+// var opts = {};
+// opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken("jwt");
+// console.log(ExtractJwt.fromAuthHeaderAsBearerToken("jwt"));
+// opts.secretOrKey = jwtkey;
+// opts.issuer = "accounts.examplesoft.com";
+// opts.audience = "yoursite.net";
+// passport.use(
+//   new JwtStrategy(opts, function (jwt_payload, done) {
+//     User.findOne({ id: jwt_payload.sub }, function (err, user) {
+//       if (err) {
+//         console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaa-----------------------");
+//         return done(err, false);
+//       }
+//       if (user) {
+//         console.log(
+//           "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-----------------------"
+//         );
+//         return done(null, user);
+//       } else {
+//         console.log(
+//           "cccccccccccccccccccccccccccccccccccc-----------------------"
+//         );
+//         return done(null, false);
+//         // or you could create a new account
+//       }
+//     });
+//   })
+// );
+
+// passport.use(
+//   new LocalStrategy(function (username, password, done) {
+//     User.findOne({ username: username }, function (err, user) {
+//       if (err) {
+//         return done(err);
+//       }
+//       if (!user) {
+//         return done(null, false);
+//       }
+//       if (!user.verifyPassword(password)) {
+//         return done(null, false);
+//       }
+//       return done(null, user);
+//     });
+//   })
+// );
+
+// var cookieExtractor = function (req) {
+//   var token = null;
+//   console.log(
+//     "dddddddddddddddddddddddddddddddddddddd-----------------------"
+//   );
+//   if (req && req.cookies) {
+//     token = req.cookies["jwt"];
+//   }
+//   return token;
+// };
+// // ...
+// opts.jwtFromRequest = cookieExtractor;
+
 module.exports = router;
