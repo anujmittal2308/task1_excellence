@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const User = require("../db/User");
 const user_add = require("../db/address");
 const User_Login = require("../db/User_login");
-const user_verification = require("../db/vetification");
+//const user_verification = require("../db/vetification");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 const hash = crypto.createHash("sha256");
@@ -12,46 +12,25 @@ const md5 = require("md5");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const passport = require("passport");
-require("../db/passports");
+//require("../db/passports");
 const jwtkey = process.env.jwtkeys;
 const localstrategy = require("passport-local").Strategy;
-const conf = require("../db/jwtsec");
+//const conf = require("../db/jwtsec");
 const jwtsimple = require("jwt-simple");
 require("../db/config");
 const session = require("express-session");
 const { nextTick } = require("process");
+const { Strategy } = require("passport-local");
+require("./auth")(passport);
 router.use(express.json());
-
-passport.use(
-  new localstrategy(
-    { usernamefield: "username" },
-    (username, password, done) => {
-      User.findOne({ username: username }, (err, data) => {
-        console.log("every think working good1");
-        if (err) {
-          console.log("every think working good2");
-          return done(err);
-        }
-        if (!data) {
-          console.log("every think working good3");
-          return done(null, false);
-        }
-        if (!data.verifyPassword(password)) {
-          console.log(data.verifyPassword(password));
-          return done(null, false);
-        }
-        console.log("every think working good");
-        return done(null, data);
-      });
-    }
-  )
-);
+passport.use("password", Strategy);
+const bcryptjs = require("bcryptjs");
 
 router.post("/register", async (req, res) => {
   const user = new User(req.body);
   console.log(user);
   try {
-    const result = await user.save();
+    const result = user;
     console.log(result);
 
     if (result.password != result.confirm_password) {
@@ -71,7 +50,15 @@ router.post("/register", async (req, res) => {
 
     result.confirm_password = sec_con_Pass;
     console.log(result);
-    jwt.sign({ result }, jwtkey, { expiresIn: "1h" }, (err, token) => {
+    console.log(
+      "------------------------------------------------------------------- ----------------------------------"
+    );
+    const result1 = await result.save();
+    console.log(result1);
+    console.log(
+      "------------------------------------------------------------------- ----------------------------------"
+    );
+    jwt.sign({ result1 }, jwtkey, { expiresIn: "1h" }, (err, token) => {
       // if (err) {
       //   res.send({ message: "jwt not work ", err });
       // }
@@ -80,32 +67,31 @@ router.post("/register", async (req, res) => {
       } catch (err) {
         res.send(err);
       }
+
       console.log(token);
-      return res
-        .status(201)
-        .json({ message: "User registered successfully", result, auth: token });
+      console.log(token, "token ----------------------------------");
+      return res.status(201).json({
+        message: "User registered successfully",
+        result1,
+        auth: token,
+      });
     });
   } catch (err) {
     console.log(err);
     res.status(400).json({ message: "error found", err });
   }
 });
-//const token = jwt.sign({ exp: 604800, data: User });
-//console.log(token);
+
 router.post(
   "/login",
-  /*{ failureRedirect: "/login", failureMessage: true } passport.authenticate(
-    "local",
-    { failureRedirect: "/login" }
-  ),*/
-
   // passport.authenticate("local", {
   //   failureRedirect: "/login",
-  //   session: false,
+  //   failureMessage: true,
   // }),
-  async (req, res, next) => {
-    // console.log(req.body.user_name);
-    // console.log(req.body.password);`
+
+  async (req, res) => {
+    console.log(req.body.user_name);
+    console.log(req.body.password);
 
     try {
       //in find we pass in key valu pair
@@ -116,9 +102,22 @@ router.post(
 
         // console.log(User.find());
         if (user) {
-          if (user.password != userpassword)
-            res.status(400).send({ message: "invalade passwoed" });
-          console.log(user);
+          bcryptjs.compare(user.password, userpassword, (err, match) => {
+            if (err) {
+              return res
+                .status(400)
+                .send({ message: "invalade passwoed side ", err });
+            }
+            if (!match) {
+              // return done(null, false, { message: "Password Doesn't match !" });
+              return res.status(400).send({ message: "invalade passwoed" });
+              console.log(user);
+            }
+          });
+
+          // if (user.password != userpassword)
+          //   res.status(400).send({ message: "invalade passwoed" });
+          // console.log(user);
 
           // digest = crypto
           //   .createHash("md5")
@@ -161,99 +160,17 @@ router.post(
           // } catch (err) {
           //   console.log(err);
           // }
-          // passport.use(
-          //   new LocalStrategy(function (username, password, done) {
-          //     User.findOne({ username: username }, function (err, user) {
-          //       if (err) {
-          //         return done(err);
-          //       }
-          //       if (!user) {
-          //         return done(null, false);
-          //       }
-          //       if (!user.verifyPassword(password)) {
-          //         return done(null, false);
-          //       }
-          //       return done(null, user);
-          //     });
-          //   })
-          // );
 
           jwt.sign({ user }, jwtkey, { expiresIn: "1h" }, (err, token) => {
             if (err) {
-              res.send({ message: "jwt not work ", err });
+              return res.send({ message: "jwt not work ", err });
             }
+            console.log(
+              "========================================================================================================="
+            );
             console.log(user);
 
-            // let params = {};
-
-            // (params.secretOrKey = process.env.jwtkeys),
-            //   (params.jwtFromRequrest =
-            //     ExtractJwt.fromAuthHeaderAsBearerToken(token)),
-            //   console.log(token);
-
-            // );
-            passport.use(
-              //  console.log(
-              // "kjakjdfjkld=====================================================")
-              new localstrategy(
-                { usernamefield: "username" },
-                (username, password, done) => {
-                  User.findOne({ username: user.name }, (err, data) => {
-                    console.log("every think working good1");
-                    if (err) {
-                      console.log("every think working good2");
-                      return done(err);
-                    }
-                    if (!data) {
-                      console.log("every think working good3");
-                      return done(null, false);
-                    }
-                    if (data.password != user.password) {
-                      console.log(data.password);
-                      return done(null, false);
-                    }
-                    if (user.passport == data.password) {
-                      console.log("every think working good");
-                      return done(null, data);
-                    }
-                    next();
-                  });
-                }
-              )
-            );
-            // passport.use(
-            //   new localstrategy( { usernamefield: "username" },
-            //     (user.name, user.password)=> {
-
-            //     console.log(
-            //       "kjakjdfjkld====================================================="
-            //     );
-            //     User.findOne({ username: username }, (err, user) => {
-            //       console.log(username);
-            //       console.log(
-            //         "kjakjdfjkld====================================================="
-            //       );
-            //       if (err) {
-            //         return done(err, false);
-            //       }
-            //       //       if (user) {
-
-            //       res.status(201).json({
-            //         message: " successful",
-            //         _id: user._id,
-            //         auth: token,
-            //         user,
-            //       });
-            //       //next();
-            //       //             done(null, true);
-            //       //             next();
-            //       //           } else {
-            //       //             return done(null, false);
-            //       //       }
-            //       });
-            //     })
-            //   );
-            res.status(201).json({
+            return res.status(201).send({
               message: " successful",
               _id: user._id,
               auth: token,
@@ -261,13 +178,11 @@ router.post(
             });
           });
         } else {
-          res.status(400).send({ result: "No User found" });
+          return res.status(400).send({ result: "No User found" });
         }
-      } else {
-        res.status(400).send({ message: "incracated usesr or password" });
       }
     } catch (error) {
-      res.status(400).send({ result: "err in suever", error });
+      return res.status(400).send({ result: "err in suever", error });
     }
   }
 );
@@ -326,47 +241,48 @@ router.post("/address/:id", VerifyToken, async (req, res) => {
   res.status(201).json({ message: "add save ", result });
 });
 
-router.get(
-  "/gets/:id",
-  /*VerifyToken,passport.authenticate("jwt", {
-    session: false,
-  })  passport.authenticate(
-    "local",
-    { failureRedirect: "/login" }
-  ),*/ VerifyToken,
-  async (req, res) => {
-    const user_id = req.params._id;
-    console.log(
-      "---------------------------------------------------------------------------------------------------------------"
-    );
-    console.log(req.params.id);
-    console.log(
-      "---------------------------------------------------------------------------------------------------------------"
-    );
-    try {
-      const userA = await User.findOne({ fist_set: user_id });
-      const userB = await user_add.findOne({ fist_set: user_id });
+router.get("/gets/:id", VerifyToken, async (req, res) => {
+  const user_id = req.params._id;
+  console.log(
+    "---------------------------------------------------------------------------------------------------------------"
+  );
+  console.log(req.params.id);
+  console.log(
+    "---------------------------------------------------------------------------------------------------------------"
+  );
+  try {
+    const userA = await User.findOne({ fist_set: user_id });
+    const userB = await user_add.findOne({ fist_set: user_id });
 
-      console.log(userA);
-      console.log(userB);
-      const mergedObject = Object.assign(userA, userB);
-      console.log(mergedObject);
-      res.status(202).json({ message: "user with it addreas", mergedObject });
-    } catch (err) {
-      res.status(400).send(err);
-    }
+    console.log(userA);
+    console.log(userB);
+    const mergedObject = Object.assign(userA, userB);
+    console.log(mergedObject);
+    res.status(202).json({ message: "user with it addreas", mergedObject });
+  } catch (err) {
+    res.status(400).send(err);
   }
-);
+});
 
 router.delete("/address", VerifyToken, async (req, res) => {
-  const userid = req.params;
+  const user_id = req.body.id;
+  const k = req.query.index_no - 1;
+  console.log(user_id);
+  console.log(k);
   try {
-    const user = await user_add.findById(userid);
+    const user = await user_add.findById(user_id);
     const userAdds = user.adress;
     let deleteAdd = [];
-    for (userAdd of userAdds) {
-      deleteAdd.push(user);
+    console.log(deleteAdd);
+    let i = 0;
+    for (let userAdd of userAdds) {
+      if (i <= k) {
+        deleteAdd.push(userAdd);
+        console.log(userAdd);
+      }
+      i++;
     }
+    console.log(deleteAdd);
     res.status(200).send({ deleteAdd });
   } catch (err) {
     res.status(400).send({ err });
@@ -420,11 +336,11 @@ router.delete("/address", VerifyToken, async (req, res) => {
 
 async function VerifyToken(req, res, next) {
   let token = req.headers["authorization"];
-  console.log(token);
-  console.log("nakjdnhfhkj");
+  //console.log(token);
+  //console.log("nakjdnhfhkj");
   if (token) {
     token = token.split(" ")[1];
-    console.log(token);
+    //console.log(token);
     jwt.verify(token, jwtkey, async (err, valid) => {
       if (err) {
         res.status(401).send({ result: "please provide valid token" });
@@ -435,7 +351,7 @@ async function VerifyToken(req, res, next) {
   } else {
     res.status(403).send({ result: "please add tokenn with header" });
   }
-  console.warn(token);
+  //console.warn(token);
 }
 
 var JwtStrategy = require("passport-jwt").Strategy,
