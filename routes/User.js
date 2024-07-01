@@ -12,14 +12,40 @@ const md5 = require("md5");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const passport = require("passport");
-//require("../db/passports")(passport);
+require("../db/passports");
 const jwtkey = process.env.jwtkeys;
-const LocalStrategy = require("passport-local").LocalStrategy;
-
+const localstrategy = require("passport-local").Strategy;
+const conf = require("../db/jwtsec");
+const jwtsimple = require("jwt-simple");
 require("../db/config");
 const session = require("express-session");
 const { nextTick } = require("process");
 router.use(express.json());
+
+passport.use(
+  new localstrategy(
+    { usernamefield: "username" },
+    (username, password, done) => {
+      User.findOne({ username: username }, (err, data) => {
+        console.log("every think working good1");
+        if (err) {
+          console.log("every think working good2");
+          return done(err);
+        }
+        if (!data) {
+          console.log("every think working good3");
+          return done(null, false);
+        }
+        if (!data.verifyPassword(password)) {
+          console.log(data.verifyPassword(password));
+          return done(null, false);
+        }
+        console.log("every think working good");
+        return done(null, data);
+      });
+    }
+  )
+);
 
 router.post("/register", async (req, res) => {
   const user = new User(req.body);
@@ -72,7 +98,12 @@ router.post(
     "local",
     { failureRedirect: "/login" }
   ),*/
-  async (req, res) => {
+
+  // passport.authenticate("local", {
+  //   failureRedirect: "/login",
+  //   session: false,
+  // }),
+  async (req, res, next) => {
     // console.log(req.body.user_name);
     // console.log(req.body.password);`
 
@@ -80,9 +111,13 @@ router.post(
       //in find we pass in key valu pair
       if (req.body.user_name && req.body.password) {
         const username = req.body.user_name;
+        const userpassword = req.body.password;
         const user = await User.findOne({ user_name: username });
+
         // console.log(User.find());
         if (user) {
+          if (user.password != userpassword)
+            res.status(400).send({ message: "invalade passwoed" });
           console.log(user);
 
           // digest = crypto
@@ -155,44 +190,81 @@ router.post(
             //   (params.jwtFromRequrest =
             //     ExtractJwt.fromAuthHeaderAsBearerToken(token)),
             //   console.log(token);
-            // console.log(
-            //   "kjakjdfjkld====================================================="
+
             // );
+            passport.use(
+              //  console.log(
+              // "kjakjdfjkld=====================================================")
+              new localstrategy(
+                { usernamefield: "username" },
+                (username, password, done) => {
+                  User.findOne({ username: user.name }, (err, data) => {
+                    console.log("every think working good1");
+                    if (err) {
+                      console.log("every think working good2");
+                      return done(err);
+                    }
+                    if (!data) {
+                      console.log("every think working good3");
+                      return done(null, false);
+                    }
+                    if (data.password != user.password) {
+                      console.log(data.password);
+                      return done(null, false);
+                    }
+                    if (user.passport == data.password) {
+                      console.log("every think working good");
+                      return done(null, data);
+                    }
+                    next();
+                  });
+                }
+              )
+            );
             // passport.use(
-            //   new JwtStrategy(opts, (jwt_payload, done) => {
-            //     console.log(jwt_payload._id);
-            //     console.log(token);
+            //   new localstrategy( { usernamefield: "username" },
+            //     (user.name, user.password)=> {
+
             //     console.log(
             //       "kjakjdfjkld====================================================="
             //     );
-            //     User.findOne({ id: jwt_payload.email }, (err, user) => {
-            //       console.log(id);
+            //     User.findOne({ username: username }, (err, user) => {
+            //       console.log(username);
             //       console.log(
             //         "kjakjdfjkld====================================================="
             //       );
             //       if (err) {
             //         return done(err, false);
             //       }
-            //       if (user) {
+            //       //       if (user) {
+
+            //       res.status(201).json({
+            //         message: " successful",
+            //         _id: user._id,
+            //         auth: token,
+            //         user,
+            //       });
+            //       //next();
+            //       //             done(null, true);
+            //       //             next();
+            //       //           } else {
+            //       //             return done(null, false);
+            //       //       }
+            //       });
+            //     })
+            //   );
             res.status(201).json({
               message: " successful",
               _id: user._id,
               auth: token,
               user,
             });
-            //next();
-            //             done(null, true);
-            //             next();
-            //           } else {
-            //             return done(null, false);
-            //           }
-            //         });
-            //       })
-            //     );
           });
         } else {
           res.status(400).send({ result: "No User found" });
         }
+      } else {
+        res.status(400).send({ message: "incracated usesr or password" });
       }
     } catch (error) {
       res.status(400).send({ result: "err in suever", error });
