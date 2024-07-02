@@ -16,7 +16,15 @@ const session = require("express-session");
 app.use("/user", user);
 require("./routes/auth")(passport);
 app.use(passport.initialize());
-app.use(passport.session());
+
+const expressSession = require("express-session")({
+  secret: "secret",
+  resave: false,
+  saveUninitialized: false,
+});
+
+app.use(expressSession);
+
 app.get("/", (req, res) => {
   digest = crypto.createHash("md5").update("example@gmail.com").digest("hex");
   Math.floor((parseInt(digest, 16) / 2 ** 128) * 100);
