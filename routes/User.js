@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const User = require("../db/User");
 const user_add = require("../db/address");
 const User_Login = require("../db/User_login");
-//const user_verification = require("../db/vetification");
+const user_verification = require("../db/vetification");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 const hash = crypto.createHash("sha256");
@@ -85,129 +85,124 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post("/login", (req, res, next) => {
-  console.log(req);
-  passport.authenticate("local", (err, user, info) => {
-    if (err) {
-      return next(err);
-    }
-
-    if (!user) {
-      return res.redirect("/login?info=" + info);
-    }
-
-    req.logIn(user, function (err) {
-      if (err) {
-        return next(err);
-      }
-
-      return res.redirect("/");
-    });
-  })(req, res, next);
-});
-
-// router.post(
-//   "/login",
-
-//   passport.authenticate("local", { session: true }),
-
-//   async (req, res) => {
-//     console.log(req.body.user_name);
-//     console.log(req.body.password);
-
-//     try {
-//       //in find we pass in key valu pair
-//       if (req.body.user_name && req.body.password) {
-//         const username = req.body.user_name;
-//         const userpassword = req.body.password;
-//         const user = await User.findOne({ user_name: username });
-
-//         // console.log(User.find());
-//         if (user) {
-//           bcryptjs.compare(user.password, userpassword, (err, match) => {
-//             if (err) {
-//               return res
-//                 .status(400)
-//                 .send({ message: "invalade passwoed side ", err });
-//             }
-//             if (!match) {
-//               // return done(null, false, { message: "Password Doesn't match !" });
-//               return res.status(400).send({ message: "invalade passwoed" });
-//               console.log(user);
-//             }
-//           });
-
-//           // if (user.password != userpassword)
-//           //           //   res.status(400).send({ message: "invalade passwoed" });
-//           //           // console.log(user);
-
-//           //           // digest = crypto
-//           //           //   .createHash("md5")
-//           //           //   .update("example@gmail.com")
-//           //           //   .digest("hex");
-//           //           // Math.floor((parseInt(digest, 16) / 2 ** 128) * 100);
-//           //           // console.log(digest);
-//           //           // const user_Id = user._id;
-//           //           // console.log(user_Id);
-
-//           //           // const data = { user_id: user_Id, ramdom_no: digest };
-//           //           // const verifiuser = await new user_verification(data);
-
-//           //           // console.log(data);
-//           //           //try {
-//           //           // const data = user_verification.create({
-//           //           //   user_id: user_Id,
-//           //           //   ramdom_no: digest,
-//           //           // });
-//           //           //const date_time = new Date();
-//           //           // let date = ("0" + date_time.getDate()).slice(-2);
-//           //           // let month = ("0" + (date_time.getMonth() + 1)).slice(-2);
-//           //           // let year = date_time.getFullYear();
-//           //           // const hours = date_time.getHours();
-//           //           // const minutes = date_time.getMinutes();
-//           //           // const seconds = date_time.getSeconds();
-//           //           // let time_count = 0 + hours * 60;
-//           //           // time_count = time_count + minutes;
-//           //           // time_count = time_count + seconds / 60;
-//           //           // prints date & time in YYYY-MM-DD HH:MM:SS format
-//           //           // console.log(time_count);
-
-//           //           //   const data = new user_verification({
-//           //           //     user_id: user_Id,
-//           //           //     ramdom_no: digest,
-//           //           //     time_out: time_count,
-//           //           //   });
-//           //           //   const savedData = await data.save();
-//           //           //   //          const result = await user_verification.save(data);
-//           //           // } catch (err) {
-//           //           //   console.log(err);
-//           //           // }
-
-//           jwt.sign({ user }, jwtkey, { expiresIn: "1h" }, (err, token) => {
-//             if (err) {
-//               return res.send({ message: "jwt not work ", err });
-//             }
-//             console.log(
-//               "========================================================================================================="
-//             );
-//             console.log(user);
-
-//             return res.status(201).send({
-//               message: " successful",
-//               _id: user._id,
-//               auth: token,
-//               user,
-//             });
-//           });
-//         } else {
-//           return res.status(400).send({ result: "No User found" });
-//         }
-//       }
-//     } catch (error) {
-//       return res.status(400).send({ result: "err in suever", error });
+// router.post("/login", (req, res, next) => {
+//   console.log(req);
+//   passport.authenticate("local", (err, user, info) => {
+//     if (err) {
+//       return next(err);
 //     }
-//   }
-// );
+
+//     if (!user) {
+//       return res.redirect("/login?info=" + info);
+//     }
+
+//     req.logIn(user, function (err) {
+//       if (err) {
+//         return next(err);
+//       }
+
+//       return res.redirect("/");
+//     });
+//   })(req, res, next);
+// });
+
+router.post(
+  "/login",
+
+  //passport.authenticate("local", { session: true }),
+
+  async (req, res) => {
+    console.log(req.body.user_name);
+    console.log(req.body.password);
+
+    try {
+      //in find we pass in key valu pair
+      if (req.body.user_name && req.body.password) {
+        const username = req.body.user_name;
+        const userpassword = req.body.password;
+        const user = await User.findOne({ user_name: username });
+
+        // console.log(User.find());
+        if (user) {
+          bcryptjs.compare(user.password, userpassword, (err, match) => {
+            if (err) {
+              return res
+                .status(400)
+                .send({ message: "invalade passwoed side ", err });
+            }
+          });
+
+          // if (user.password != userpassword)
+          //           //   res.status(400).send({ message: "invalade passwoed" });
+          //           // console.log(user);
+
+          //           // digest = crypto
+          //           //   .createHash("md5")
+          //           //   .update("example@gmail.com")
+          //           //   .digest("hex");
+          //           // Math.floor((parseInt(digest, 16) / 2 ** 128) * 100);
+          //           // console.log(digest);
+          //           // const user_Id = user._id;
+          //           // console.log(user_Id);
+
+          //           // const data = { user_id: user_Id, ramdom_no: digest };
+          //           // const verifiuser = await new user_verification(data);
+
+          //           // console.log(data);
+          //           //try {
+          //           // const data = user_verification.create({
+          //           //   user_id: user_Id,
+          //           //   ramdom_no: digest,
+          //           // });
+          //           //const date_time = new Date();
+          //           // let date = ("0" + date_time.getDate()).slice(-2);
+          //           // let month = ("0" + (date_time.getMonth() + 1)).slice(-2);
+          //           // let year = date_time.getFullYear();
+          //           // const hours = date_time.getHours();
+          //           // const minutes = date_time.getMinutes();
+          //           // const seconds = date_time.getSeconds();
+          //           // let time_count = 0 + hours * 60;
+          //           // time_count = time_count + minutes;
+          //           // time_count = time_count + seconds / 60;
+          //           // prints date & time in YYYY-MM-DD HH:MM:SS format
+          //           // console.log(time_count);
+
+          //           //   const data = new user_verification({
+          //           //     user_id: user_Id,
+          //           //     ramdom_no: digest,
+          //           //     time_out: time_count,
+          //           //   });
+          //           //   const savedData = await data.save();
+          //           //   //          const result = await user_verification.save(data);
+          //           // } catch (err) {
+          //           //   console.log(err);
+          //           // }
+
+          jwt.sign({ user }, jwtkey, { expiresIn: "1h" }, (err, token) => {
+            if (err) {
+              return res.send({ message: "jwt not work ", err });
+            }
+            console.log(
+              "========================================================================================================="
+            );
+            console.log(user);
+
+            return res.status(201).send({
+              message: " successful",
+              _id: user._id,
+              auth: token,
+              user,
+            });
+          });
+        } else {
+          return res.status(400).send({ result: "No User found" });
+        }
+      }
+    } catch (error) {
+      return res.status(400).send({ result: "err in suever", error });
+    }
+  }
+);
 
 router.get("/get/:_id", VerifyToken, async (req, res) => {
   const user_id = req.params._id;
@@ -440,15 +435,61 @@ var JwtStrategy = require("passport-jwt").Strategy,
 // opts.jwtFromRequest = cookieExtractor;
 
 router.post("/forgot-password", VerifyToken, async (req, res) => {
-  if (req.body.password != req.body.confirm_password)
-    res.status(400).send("confirm password not same");
-  const user_email = req.body.email;
-  console.log(user_email);
-  const user = await user.findByIdAndUpdate(user_email, {
-    $set: {
-      password: req.body.password,
-    },
-  });
+  // if (req.body.password != req.body.confirm_password)
+  //   res.status(400).send("confirm password not same");
+  const user_Id = req.body._id;
+  console.log(user_Id);
+  const user = await User.findById(user_Id);
+
+  if (!user) {
+    res.status(400).send("user no found");
+  }
+
+  digest = crypto.createHash("md5").update("example@gmail.com").digest("hex");
+  Math.floor((parseInt(digest, 16) / 2 ** 128) * 100);
+  console.log(digest);
+
+  console.log(user_Id);
+
+  const data = { user_id: user_Id, ramdom_no: digest };
+
+  const verifiuser = await new user_verification(data);
+
+  console.log(data);
+  console.log(verifiuser);
+  try {
+    const datas = user_verification.create({
+      user_id: user_Id,
+      ramdom_no: digest,
+    });
+    const date_time = new Date();
+    let date = ("0" + date_time.getDate()).slice(-2);
+    let month = ("0" + (date_time.getMonth() + 1)).slice(-2);
+    let year = date_time.getFullYear();
+    const hours = date_time.getHours();
+    const minutes = date_time.getMinutes();
+    const seconds = date_time.getSeconds();
+    let time_count = 0 + hours * 60;
+    time_count = time_count + minutes;
+    time_count = time_count + seconds / 60;
+
+    console.log(time_count);
+
+    const data = new user_verification({
+      user_id: user_Id,
+      ramdom_no: digest,
+      time_count: time_count,
+    });
+
+    //const savedData = await data.save();
+    console.log(
+      "========================================================================================================"
+    );
+    //const result = await user_verification.save(data);
+    res.status(200).send("okok");
+  } catch (err) {
+    console.log(err);
+  }
 });
 
 const fileuplode = multer({
