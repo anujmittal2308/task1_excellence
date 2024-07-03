@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  time_count: {
+  time_out: {
     type: Number,
     required: true,
   },

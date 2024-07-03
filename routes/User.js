@@ -27,7 +27,8 @@ require("../routes/auth")(passport);
 passport.use("password", Strategy);
 const bcryptjs = require("bcryptjs");
 const multer = require("multer");
-const { error } = require("console");
+const { error, Console } = require("console");
+const nodemailer = require("nodemailer");
 
 router.post("/register", async (req, res) => {
   const user = new User(req.body);
@@ -132,7 +133,7 @@ router.post(
             }
           });
 
-          // if (user.password != userpassword)
+          // if (user.password != userpassword) {
           //           //   res.status(400).send({ message: "invalade passwoed" });
           //           // console.log(user);
 
@@ -359,9 +360,12 @@ async function VerifyToken(req, res, next) {
     token = token.split(" ")[1];
     //console.log(token);
     jwt.verify(token, jwtkey, async (err, valid) => {
+      console.log("==========================================================");
+      console.log(valid.user);
       if (err) {
         res.status(401).send({ result: "please provide valid token" });
       } else {
+        req.value = valid.user;
         next();
       }
     });
@@ -458,10 +462,10 @@ router.post("/forgot-password", VerifyToken, async (req, res) => {
   console.log(data);
   console.log(verifiuser);
   try {
-    const datas = user_verification.create({
-      user_id: user_Id,
-      ramdom_no: digest,
-    });
+    // const datas = user_verification.create({
+    //   user_id: user_Id,
+    //   ramdom_no: digest,
+    // });
     const date_time = new Date();
     let date = ("0" + date_time.getDate()).slice(-2);
     let month = ("0" + (date_time.getMonth() + 1)).slice(-2);
@@ -475,20 +479,212 @@ router.post("/forgot-password", VerifyToken, async (req, res) => {
 
     console.log(time_count);
 
-    const data = new user_verification({
+    const data = user_verification.create({
       user_id: user_Id,
       ramdom_no: digest,
-      time_count: time_count,
+      time_out: time_count,
     });
-
+    console.log(
+      "========================================================================================================"
+    );
     //const savedData = await data.save();
     console.log(
       "========================================================================================================"
     );
-    //const result = await user_verification.save(data);
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "",
+        pass: "",
+      },
+    });
+    const mailOptions = {
+      from: "",
+      to: user.email,
+      subject: "token for change password",
+      text: digest,
+    };
+
+    transporter.sendMail(mailOptions, () => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("email send:" + info.response);
+      }
+    });
+    console.log(mailOptions);
+    //const result = user_verification.save(data);
     res.status(200).send("okok");
   } catch (err) {
     console.log(err);
+    res.status(400).send(err);
+  }
+});
+
+// async function VerifyToken1(req, res, next) {
+//   let token = req.headers["authorization"];
+//   //console.log(token);
+//   //console.log("nakjdnhfhkj");
+//   if (token) {
+//     token = token.split(" ")[1];
+//     //console.log(token);
+//     jwt.verify(token, jwtkey, async (err, valid) => {
+//       if (err) {
+//         res.status(401).send({ result: "please provide valid token" });
+//       } else {
+//         next();
+//       }
+//     });
+//   } else {
+//     res.status(403).send({ result: "please add tokenn with header" });
+//   }
+//   //console.warn(token);
+// }
+
+router.post("/forgots-password", async (req, res) => {
+  const username = req.body.user_name;
+  const useremail = req.body.email;
+  const user = await User.findOne({ user_name: username });
+  console.log(user);
+  if (!user) {
+    return res.status(400).send("providing valaid user name");
+  } else {
+    jwt.sign({ useremail }, jwtkey, { expiresIn: "4h" }, (err, token) => {
+      if (err) {
+        console.log(err);
+        return res.send({ message: "jwt not work ", err });
+      }
+      console.log(
+        "===================================================_/_/======================================================="
+      );
+      console.log(user);
+
+      res.status(201).send({
+        message: " successful",
+        email: req.body.email,
+        auth: token,
+      });
+    });
+  }
+});
+
+router.put("/verify-reset-password/:_token", async (req, res) => {
+  let token = req.params._token;
+  console.log(token);
+  if (token) {
+    token = token.split(" ")[0];
+
+    jwt.verify(token, jwtkey, async (err, valid) => {
+      console.log(token);
+      console.log("==========================================================");
+      console.log(valid);
+      if (err) {
+        res.status(401).send({ result: "please provide valid token" });
+      } else {
+        const useremail = valid.useremail;
+        console.log(useremail);
+
+        if (req.body.password != req.body.confirm_password) {
+          res.status(400).send(" Password and confirm password not matches");
+        }
+        console.log(
+          "=========================================================="
+        );
+        const user = await User.findOne({ email: useremail });
+
+        //const user = await User.findOne({ user_email: useremail });
+        console.log(
+          "=========================================================="
+        );
+        console.log(user);
+        console.log(
+          "==========================================================2222222222222222222222222222222222222"
+        );
+        const cur_pass = req.body.Password;
+        const mainuser = await User.updateOne(
+          { email: useremail },
+          { $set: { password: cur_pass } },
+          { new: true }
+        );
+        // then(() => {
+        //   console.log("new password set");
+        //   res.status(200).send("new password", User.password);
+        // })
+        // catch((e) => {
+        //   console.error(e.message);
+        //   res.status(400).send("password not update ");
+        // });
+        console.log(mainuser);
+        res.status(200).send("password update");
+        // next();
+      }
+    });
+  } else {
+    res.status(400).send({ result: "please add tokenn with header" });
+  }
+});
+
+router.patch("/verify-reset-password/:token", async (req, res) => {
+  if (req.body.password != req.body.confirm_password) {
+    res.status(400).send(" Password and confirm password not matches");
+  }
+  const token = req.params.token;
+  console.log(token);
+
+  const user = await user_verification.findOne({
+    ramdom_no: token,
+  });
+  console.log(user);
+  if (!user) {
+    console.log("invalade token or genrater again");
+    res.status(400).send("invalad token genrater again");
+  }
+  try {
+    const date_time = new Date();
+
+    const hours = date_time.getHours();
+    const minutes = date_time.getMinutes();
+    const seconds = date_time.getSeconds();
+    let time_count = 0 + hours * 60;
+    time_count = time_count + minutes;
+    time_count = time_count + seconds / 60;
+
+    console.log(time_count);
+    const time_out = user.time_out;
+    console.log(time_out + 16);
+    if (time_out + 55 <= time_count) {
+      res.status(201).send("token is expiry due to more than 15 min try again");
+    }
+    const salt = await bcrypt.genSalt(10);
+    const secPass = await bcrypt.hash(req.body.password, salt);
+
+    const secPassword = secPass;
+    const user_id = user.user_id;
+    //console.log(User._id);
+    // const mainuser = await User.findById(
+    //   user_id,
+    //   ({ new_password: User.password }, { $set: secPassword }, { new: true })
+    // );
+    console.log(secPassword);
+    const mainuser = await User.findByIdAndUpdate(
+      { _id: user_id },
+      {
+        $set: { passwod: secPassword },
+      },
+      { new: true }
+    );
+    console.log(
+      mainuser,
+      "==========================================================="
+    );
+    //console.log(mainuser);
+    console.log("===========================================================");
+
+    res.status(200).send({ message: "new password set ", secPassword });
+  } catch (err) {
+    console.log(err);
+    res.status(400).send({ message: "error", err });
   }
 });
 
