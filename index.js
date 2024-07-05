@@ -16,6 +16,8 @@ const session = require("express-session");
 app.use("/user", user);
 require("./routes/auth")(passport);
 app.use(passport.initialize());
+const path = require("path");
+const ejs = require("ejs");
 
 const expressSession = require("express-session")({
   secret: "secret",
@@ -24,12 +26,13 @@ const expressSession = require("express-session")({
 });
 
 app.use(expressSession);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "./views"));
 
 app.get("/", (req, res) => {
-  digest = crypto.createHash("md5").update("example@gmail.com").digest("hex");
-  Math.floor((parseInt(digest, 16) / 2 ** 128) * 100);
-  console.log(digest);
-
   res.send("Hello World!");
 });
 

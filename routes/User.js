@@ -26,9 +26,17 @@ router.use(express.json());
 require("../routes/auth")(passport);
 passport.use("password", Strategy);
 const bcryptjs = require("bcryptjs");
+const path = require("path");
+const ejs = require("ejs");
 const multer = require("multer");
 const { error, Console } = require("console");
 const nodemailer = require("nodemailer");
+const { Storages } = require("../db/storage");
+
+const upload = multer({ Storages });
+
+// router.set("view engine", "ejs");
+// router.set("views", path.join(__dirname, "../views"));
 
 router.post("/register", async (req, res) => {
   const user = new User(req.body);
@@ -361,11 +369,12 @@ async function VerifyToken(req, res, next) {
     //console.log(token);
     jwt.verify(token, jwtkey, async (err, valid) => {
       console.log("==========================================================");
-      console.log(valid.user);
+
       if (err) {
         res.status(401).send({ result: "please provide valid token" });
       } else {
         req.value = valid.user;
+        console.log(valid.user);
         next();
       }
     });
@@ -550,7 +559,7 @@ router.post("/forgots-password", async (req, res) => {
   if (!user) {
     return res.status(400).send("providing valaid user name");
   } else {
-    jwt.sign({ useremail }, jwtkey, { expiresIn: "4h" }, (err, token) => {
+    jwt.sign({ useremail }, jwtkey, { expiresIn: "15m" }, (err, token) => {
       if (err) {
         console.log(err);
         return res.send({ message: "jwt not work ", err });
@@ -586,7 +595,9 @@ router.put("/verify-reset-password/:_token", async (req, res) => {
         console.log(useremail);
 
         if (req.body.password != req.body.confirm_password) {
-          res.status(400).send(" Password and confirm password not matches");
+          return res
+            .status(400)
+            .send(" Password and confirm password not matches");
         }
         console.log(
           "=========================================================="
@@ -601,11 +612,20 @@ router.put("/verify-reset-password/:_token", async (req, res) => {
         console.log(
           "==========================================================2222222222222222222222222222222222222"
         );
-        const cur_pass = req.body.Password;
+        const new_pass = req.body.password;
+        console.log(new_pass);
+        var myquery = { password: user.password };
+        console.log(user.password);
+        var newvalue = { $set: { password: new_pass } };
+
         const mainuser = await User.updateOne(
-          { email: useremail },
-          { $set: { password: cur_pass } },
-          { new: true }
+          myquery,
+          newvalue,
+          { upsert: true }
+          // function (err, doc) {
+          //   if (err) return res.send(500, { error: err });
+          //   return res.send(doc, "Succesfully saved.");
+          // }
         );
         // then(() => {
         //   console.log("new password set");
@@ -616,6 +636,7 @@ router.put("/verify-reset-password/:_token", async (req, res) => {
         //   res.status(400).send("password not update ");
         // });
         console.log(mainuser);
+
         res.status(200).send("password update");
         // next();
       }
@@ -667,6 +688,7 @@ router.patch("/verify-reset-password/:token", async (req, res) => {
     //   ({ new_password: User.password }, { $set: secPassword }, { new: true })
     // );
     console.log(secPassword);
+
     const mainuser = await User.findByIdAndUpdate(
       { _id: user_id },
       {
@@ -688,25 +710,37 @@ router.patch("/verify-reset-password/:token", async (req, res) => {
   }
 });
 
+router.post("/uplode-image", upload.single("image"), (req, res) => {
+  console.log(req.file);
+  res.send("Done");
+});
+const filePath = "C:/Users/anujmittal/Desktop/task1_excellence";
+console.log(__dirname);
 const fileuplode = multer({
   storage: multer.diskStorage({
-    diskStorage: (req, file, cb) => {
-      cb(null, "uploads");
+    destination: (req, file, cb) => {
+      cb(null, "./uploads");
     },
     filename: (req, file, cb) => {
-      cb(null, file.fieldname + " " + Date.now() + ".png");
+      console.log(file);
+      cb(null, file.originalname + " " + Date.now());
     },
   }),
-}).single("user_file");
-
-router.post("/profile-image", fileuplode, (req, res) => {
-  try {
-    console.log(Date.now());
-    res.status(201).send("file uplode");
-  } catch (err) {
-    console.log(err);
-    res.send(400).send(err);
-  }
 });
+
+router.post(
+  "/profile-image",
+  VerifyToken,
+  fileuplode.single("user_file"),
+  (req, res) => {
+    try {
+      //console.log(Date.now());
+      res.status(201).send("file uplode");
+    } catch (err) {
+      console.log(err);
+      res.send(400).send(err);
+    }
+  }
+);
 
 module.exports = router;
