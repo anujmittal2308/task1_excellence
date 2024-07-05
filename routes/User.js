@@ -82,6 +82,42 @@ router.post("/register", async (req, res) => {
 
       console.log(token);
       console.log(token, "token ----------------------------------");
+      // mail
+      // var transporter = nodemailer.createTransport({
+      //   service: "gmail",
+      //   auth: {
+      //     user: "pearlie.walter74@ethereal.email",
+      //     pass: "",
+      //   },
+      // });
+      const transporter = nodemailer.createTransport({
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false,
+        auth: {
+          user: "lavada79@ethereal.email",
+          pass: "cAjJ4SkjjbmmHWkQeQ",
+        },
+      });
+
+      var mailOptions = {
+        from: "pearlie.walter74@ethereal.email",
+        to: "anujmittal2308@gmail.com",
+        subject: "user detail",
+        text: "you are register suserfully ",
+        html: "<b>Hello world?</b>",
+      };
+      console.log("Message sent: %s", info.messageId);
+
+      transporter.sendMail(mailOptions, () => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log("email send:" + info.response);
+        }
+      });
+      console.log(mailOptions);
+
       return res.status(201).json({
         message: "User registered successfully",
         result1,
@@ -501,14 +537,14 @@ router.post("/forgot-password", VerifyToken, async (req, res) => {
       "========================================================================================================"
     );
 
-    const transporter = nodemailer.createTransport({
+    var transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: "",
         pass: "",
       },
     });
-    const mailOptions = {
+    var mailOptions = {
       from: "",
       to: user.email,
       subject: "token for change password",
@@ -723,7 +759,7 @@ const fileuplode = multer({
     },
     filename: (req, file, cb) => {
       console.log(file);
-      cb(null, file.originalname + " " + Date.now());
+      cb(null, file.originalname);
     },
   }),
 });
